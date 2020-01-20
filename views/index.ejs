@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>RealTime</title>
+
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
+    />
+
+    <style>
+      body {
+        margin-top: 50px;
+      }
+      .ad {
+        font-size: 15px;
+        margin-left: 0px;
+        color: gray;
+      }
+      .well {
+        margin-top: 20px;
+        height: 450px;
+        width: 100%;
+        border-radius: 5px;
+        border: 1px solid rgb(204, 204, 204);
+        padding: 10px;
+      }
+      .flex {
+        margin-top: 30px;
+        text-align: center;
+        font-size: 30px;
+        color: gray;
+      }
+
+      .live {
+        color: red;
+        font-weight: bold;
+      }
+
+      /* .msgArea {
+        display: none;
+      } */
+    </style>
+  </head>
+  <body>
+    <div class="container">
+
+      <div class="msgArea" id="msgArea">
+
+        <div class="row">
+          <div class="col-md-4">
+            <div>
+              <h3>RealTime Editor <span class="ad">Go slow, it's unpaid</span> </h3>
+            </div>
+          </div>
+
+          <div  class="well" id="editor">
+            <%= dbSource %>
+          </div>
+        </div>
+
+        <div class="flex">Save button? It's <span class="live">LIVE!</span> </div>
+
+      </div>
+
+    </div>
+  </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.7/ace.js" integrity="sha256-C7DTYRJLG+B/VEzHGeoPMw699nsTQYPAXHKXZb+q04E=" crossorigin="anonymous"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script
+    src="https://code.jquery.com/jquery-3.4.1.js"
+    integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+    crossorigin="anonymous"
+  ></script>
+  <script>
+    $(document).ready(() => {
+      var editor = ace.edit("editor");
+        editor.setTheme("ace/theme/github");
+        editor.session.setMode("ace/mode/javascript");
+        editor.setOptions({
+          fontSize: "15pt"
+        });
+        editor.setBehavioursEnabled(false);
+      console.log("connect");
+      const socket = io.connect();
+      let $msg = $("#msg");
+
+      socket.on("new message", data => {
+        const curPos = editor.getCursorPositionScreen() ;
+        console.log(curPos.row);
+        editor.setValue(data.msg, curPos.row);
+        editor.clearSelection();
+      });
+
+      $('#editor').keypress((e) => {
+        setTimeout(() => {
+          const source = editor.getValue();
+          socket.emit("send message", source);
+        }, 10);
+      }); 
+    });
+  </script>
+</html>
