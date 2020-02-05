@@ -40,7 +40,7 @@ mongoose.connect( keys.cred.mongoClientID,
   () => console.log("atlas db connected")
 );
 
-const port = 3000
+const port = 3001
 server.listen(port);
 console.log("server running at ", port);
 
@@ -48,7 +48,8 @@ app.get("/", (req, res) => {
   const id = '5e243df41d878d16693da671';
   sourceCodeModule.findOne({_id: id}).then(foundPost => {
     res.render('index', {
-      dbSource: foundPost.codeBody
+      dbSource: foundPost.codeBody,
+      trig: foundPost.trigger
     })
   });
   
@@ -75,10 +76,28 @@ io.sockets.on("connection", socket => {
     
   });
 
+  //Change trigger
+  socket.on('trigger change', data => {
+
+    const id = '5e243df41d878d16693da671';
+    sourceCodeModule.updateOne({ _id: id }, { $set: {trigger: data} }, (err, docs) => {
+        
+     })
+    
+  });
+
+  //Watch cahnges
   sourceCodeModule.watch().
   on('change', data => {
+
     let codeString = data.updateDescription.updatedFields.codeBody;
-    io.sockets.emit('new message', {msg: codeString});
+    let trigger = data.updateDescription.updatedFields.trigger
+    if (trigger == null){
+      io.sockets.emit('new message', {msg: codeString});
+    }
+    if (codeString == null) {
+      io.sockets.emit('trigger change', {trig: trigger})
+    }
   });
 
   //Upload to database

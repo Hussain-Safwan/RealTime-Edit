@@ -42,6 +42,15 @@
         font-weight: bold;
       }
 
+      .trigger {
+        float: right;
+        border-radius: 20px;
+        border: 1px solid #eee;
+        background-color: #fff;
+        padding: 10px;
+        margin-top: 20px;
+      }
+
       /* .msgArea {
         display: none;
       } */
@@ -63,6 +72,13 @@
             <%= dbSource %>
           </div>
         </div>
+        <span class="ad" id="flush"></span>
+        <input type="hidden" id="trig" value="<%= trig %>">
+        <select name="trigger" id="trigger" class="trigger">
+          <option value="letter">Letter</option>
+          <option value="word">Word</option>
+          <option value="sentence">Sentence</option>
+        </select>
 
         <div class="flex">Save button? It's <span class="live">LIVE!</span> </div>
 
@@ -86,22 +102,43 @@
           fontSize: "15pt"
         });
         editor.setBehavioursEnabled(false);
-      console.log("connect");
       const socket = io.connect();
       let $msg = $("#msg");
+      
+      let globalTrigger = $('#trig').val()
+      $('#flush').html(globalTrigger)
 
       socket.on("new message", data => {
-        const curPos = editor.getCursorPositionScreen() ;
-        console.log(curPos.row);
+        const curPos = editor.getCursorPositionScreen() 
         editor.setValue(data.msg, curPos.row);
         editor.clearSelection();
       });
 
+      socket.on('trigger change', data => {
+        const trig = data.trig
+        globalTrigger = trig
+        $('#flush').html(trig)
+      })
+
+      $('#trigger').click((e) => {
+        const trigger = $('#trigger').val()
+        socket.emit('trigger change', trigger)
+      })
+
       $('#editor').keypress((e) => {
-        setTimeout(() => {
-          const source = editor.getValue();
-          socket.emit("send message", source);
-        }, 10);
+        var keycode = e.which;
+          if (globalTrigger == 'letter'){
+            const source = editor.getValue();         
+            socket.emit("send message", source);
+          }
+          if ( globalTrigger == 'word' && (keycode == 32 || keycode == 13)) { 
+            const source = editor.getValue();         
+            socket.emit("send message", source);
+          }
+          if (globalTrigger == 'sentence' && (keycode == 13)) {
+            const source = editor.getValue();         
+            socket.emit("send message", source);
+          }
       }); 
     });
   </script>

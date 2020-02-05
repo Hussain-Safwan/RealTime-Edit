@@ -3,6 +3,9 @@ var mongoose = require('mongoose');
 var sourceCode = mongoose.Schema({
     codeBody: {
       type: String
+    },
+    trigger: {
+      type: String
     }
 });
 
